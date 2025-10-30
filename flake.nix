@@ -10,19 +10,34 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, bun2nix }:
+  outputs = { self, nixpkgs, flake-utils, bun2nix, }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        
+        # pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = let version = "1.3.1";
+          in [
+            (final: prev: {
+              bun = prev.bun.overrideAttrs (oldAttrs: {
+                src = prev.fetchurl {
+                  url =
+                    "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-x64-baseline.zip";
+                  hash = "sha256-oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
+                };
+              });
+            })
+          ];
+        };
+
         # Read version from package.json
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         version = packageJson.version;
-        
+
         ldLibraryPath = ''
-          LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
-            pkgs.stdenv.cc.cc.lib
-          ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          LD_LIBRARY_PATH=${
+            pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]
+          }''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
         '';
 
         backlog-md = bun2nix.lib.${system}.mkBunDerivation {
@@ -31,39 +46,40 @@
           src = ./.;
           packageJson = ./package.json;
           bunNix = ./bun.nix;
-          
+
           nativeBuildInputs = with pkgs; [ bun git rsync ];
-          
+
           preBuild = ''
             export HOME=$TMPDIR
             export HUSKY=0
             export ${ldLibraryPath}
           '';
-          
+
           buildPhase = ''
             runHook preBuild
-            
+
             # Build CSS
             bun run build:css
-            
+
             # Build the CLI tool with embedded version
             bun build --compile --minify --define "__EMBEDDED_VERSION__=${version}" --outfile=dist/backlog src/cli.ts
-            
+
             runHook postBuild
           '';
-          
+
           installPhase = ''
             runHook preInstall
-            
+
             mkdir -p $out/bin
             cp dist/backlog $out/bin/backlog
             chmod +x $out/bin/backlog
-            
+
             runHook postInstall
           '';
-          
+
           meta = with pkgs.lib; {
-            description = "A markdown-based task management CLI tool with Kanban board";
+            description =
+              "A markdown-based task management CLI tool with Kanban board";
             longDescription = ''
               Backlog.md is a command-line tool for managing tasks and projects using markdown files.
               It provides Kanban board visualization, task management, and integrates with Git workflows.
@@ -77,39 +93,29 @@
                 github = "MrLesk";
                 githubId = 181345848;
               };
-            in
-              with maintainers; [ anpryl mrlesk ];
+            in with maintainers; [ anpryl mrlesk ];
             platforms = platforms.all;
             mainProgram = "backlog";
           };
         };
-      in
-      {
+      in {
         packages = {
           default = backlog-md;
           "backlog-md" = backlog-md;
         };
-        
+
         apps = {
           default = flake-utils.lib.mkApp {
             drv = backlog-md;
             name = "backlog";
           };
         };
-        
+
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            bun
-            bun2nix.packages.${system}.default
-          ];
-          
-          buildInputs = with pkgs; [
-            bun
-            nodejs_20
-            git
-            biome
-          ];
-          
+          packages = with pkgs; [ bun bun2nix.packages.${system}.default ];
+
+          buildInputs = with pkgs; [ bun nodejs_20 git biome ];
+
           shellHook = ''
             export ${ldLibraryPath}
 
