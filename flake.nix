@@ -19,7 +19,8 @@
           overlays = [
             (final: prev: {
               bun = prev.bun.overrideAttrs (finalAttrs: oldAttrs:
-                let bunVersion = "1.2.23";
+                # let bunVersion = "1.2.23";
+                let bunVersion = "1.3.1";
                 in {
                   src =
                     finalAttrs.passthru.sources.${prev.stdenvNoCC.hostPlatform.system} or (throw
@@ -30,7 +31,7 @@
                       url =
                         "https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/bun-linux-x64-baseline.zip";
                       sha256 =
-                        "017f89e19e1b40aa4c11a7cf671d3990cb51cc12288a43473238a019a8cafffc";
+                        "oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
                     };
                   };
                 });
