@@ -25,13 +25,12 @@
                     finalAttrs.passthru.sources.${prev.stdenvNoCC.hostPlatform.system} or (throw
                       "Unsupported system: ${prev.stdenvNoCC.hostPlatform.system}");
 
-                  passthru = oldAttrs.passthru // {
-                    sources = oldAttrs.passthru.sources // {
-                      "x86_64-linux" = prev.fetchurl {
-                        url =
-                          "https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/bun-linux-x64-baseline.zip";
-                        sha256 = "017f89e19e1b40aa4c11a7cf671d3990cb51cc12288a43473238a019a8cafffc";
-                      };
+                  passthru.sources = oldAttrs.passthru.sources // {
+                    "x86_64-linux" = prev.fetchurl {
+                      url =
+                        "https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/bun-linux-x64-baseline.zip";
+                      sha256 =
+                        "017f89e19e1b40aa4c11a7cf671d3990cb51cc12288a43473238a019a8cafffc";
                     };
                   };
                 });
