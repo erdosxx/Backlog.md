@@ -35,18 +35,7 @@
                       };
                     };
                   };
-
-                  # meta.platforms =
-                  #   builtins.attrNames finalAttrs.passthru.sources;
                 });
-
-              # bun = prev.bun.overrideAttrs (oldAttrs: {
-              #   src = prev.fetchurl {
-              #     url =
-              #       "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-x64-baseline.zip";
-              #     hash = "sha256-oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
-              #   };
-              # });
             })
           ];
         };
