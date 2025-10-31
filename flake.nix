@@ -16,16 +16,37 @@
         # pkgs = nixpkgs.legacyPackages.${system};
         pkgs = import nixpkgs {
           inherit system;
-          overlays = let version = "1.3.1";
-          in [
+          overlays = [
             (final: prev: {
-              bun = prev.bun.overrideAttrs (oldAttrs: {
-                src = prev.fetchurl {
-                  url =
-                    "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-x64-baseline.zip";
-                  hash = "sha256-oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
-                };
-              });
+              bun = prev.bun.overrideAttrs (finalAttrs: previousAttrs:
+                let version = "1.3.1";
+                in {
+                  src =
+                    finalAttrs.passthru.sources.${prev.stdenvNoCC.hostPlatform.system} or (throw
+                      "Unsupported system: ${prev.stdenvNoCC.hostPlatform.system}");
+
+                  passthru = previousAttrs.passthru // {
+                    sources = previousAttrs.passthru.sources // {
+                      "x86_64-linux" = prev.fetchurl {
+                        url =
+                          "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-x64-baseline.zip";
+                        hash =
+                          "sha256-oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
+                      };
+                    };
+                  };
+
+                  # meta.platforms =
+                  #   builtins.attrNames finalAttrs.passthru.sources;
+                });
+
+              # bun = prev.bun.overrideAttrs (oldAttrs: {
+              #   src = prev.fetchurl {
+              #     url =
+              #       "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-linux-x64-baseline.zip";
+              #     hash = "sha256-oPlaeSdMBsJSzaq/HQ6HjhXQ0wZ5v2dS4DJuwUEwIyM=";
+              #   };
+              # });
             })
           ];
         };
